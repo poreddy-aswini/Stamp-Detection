@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Stamp Checker | Tabular Document</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 30px 16px;
+      color: #1f2933;
+    }
+    .container { max-width: 860px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 { font-size: 26px; color: #14324f; letter-spacing: .3px; }
+    header p { color: #52606d; margin-top: 6px; font-size: 14px; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(20, 50, 79, .12);
+      margin-bottom: 20px;
+    }
+    .step { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #14324f; color: #fff; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600; flex-shrink: 0;
+    }
+    .step h2 { font-size: 16px; }
+
+    label { font-weight: 600; font-size: 13px; display: block; margin: 14px 0 6px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .field { flex: 1; min-width: 220px; }
+
+    input[type=file] {
+      width: 100%; padding: 12px; border: 1.5px dashed #90a4ae;
+      border-radius: 8px; background: #fafbfc; font-size: 14px; cursor: pointer;
+    }
+    select, input[type=number], textarea {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #cfd8dc;
+      border-radius: 8px; font-size: 14px; background: #fff;
+    }
+    .checkbox-list {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 220px; overflow-y: auto;
+      border: 1.5px solid #cfd8dc; border-radius: 8px; padding: 10px 12px;
+      background: #fafbfc;
+    }
+    .checkbox-list label {
+      display: flex; align-items: center; gap: 8px;
+      margin: 0; font-weight: 500; font-size: 14px; cursor: pointer;
+    }
+    .checkbox-list input[type=checkbox] {
+      width: 16px; height: 16px; cursor: pointer; accent-color: #1976d2;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    select:disabled, textarea:disabled, input:disabled { background: #f1f3f4; cursor: not-allowed; }
+
+    .btn {
+      border: none; border-radius: 8px; padding: 12px 22px;
+      font-size: 14px; font-weight: 600; cursor: pointer; color: #fff;
+      transition: filter .15s, transform .05s;
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { background: #b0bec5 !important; cursor: not-allowed; }
+    .btn-primary { background: #1976d2; }
+    .btn-success { background: #00b050; }
+    .btn-download { background: #00b050; text-decoration: none; display: inline-block; margin-top: 14px; }
+
+    .hint { font-size: 12px; color: #78909c; margin-top: 4px; }
+
+    .error {
+      background: #fdecea; border: 1px solid #ef9a9a; color: #b71c1c;
+      padding: 12px 14px; border-radius: 8px; font-size: 14px; display: none;
+    }
+    .loading { text-align: center; padding: 14px; color: #1976d2; font-weight: 600; display: none; }
+    .spinner {
+      display: inline-block; width: 16px; height: 16px; border: 3px solid #cfd8dc;
+      border-top-color: #1976d2; border-radius: 50%; animation: spin .7s linear infinite;
+      vertical-align: -3px; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .stat {
+      flex: 1; min-width: 130px; border-radius: 10px; padding: 14px; text-align: center; color: #fff;
+    }
+    .stat.green { background: #00b050; }
+    .stat.red { background: #e53935; }
+    .stat.gray { background: #90a4ae; }
+    .stat .num { font-size: 26px; font-weight: 700; }
+    .stat .lbl { font-size: 13px; opacity: .92; margin-top: 2px; }
+
+    .legend { display: flex; gap: 18px; margin: 14px 0; font-size: 13px; flex-wrap: wrap; }
+    .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 18px; height: 18px; border-radius: 4px; display: inline-block; }
+    .swatch.green { border: 3px solid #00b050; }
+    .swatch.red { border: 3px solid #e53935; }
+
+    .table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; }
+    table { border-collapse: separate; border-spacing: 0 8px; width: 100%; font-size: 14px; }
+    th, td { padding: 9px 12px; text-align: left; border: 1px solid #cfd8dc; white-space: nowrap; }
+    th { background: #14324f; color: #fff; position: sticky; top: 0; z-index: 1; box-shadow: 0 8px 0 #14324f; }
+    td.present-cell { border: 3px solid #00b050; }
+    td.absent-cell { border: 3px solid #e53935; }
+    .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; color: #fff; }
+    .badge.yes { background: #00b050; }
+    .badge.no { background: #e53935; }
+    .empty-row { text-align: center; color: #90a4ae; padding: 24px; }
+
+    footer { text-align: center; color: #78909c; font-size: 12px; margin-top: 22px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🕹️ Stamp Border Checker</h1>
+      <p>Upload a tabular document (XLSX / XLSM / CSV / PDF), pick the stamp column, and every cell in it gets
+        checked. Stamps are detected automatically from images placed in the cells.</p>
+    </header>
+
+    <div class="card">
+      <div class="step"><span class="step-num">1</span><h2>Upload document</h2></div>
+      <div class="row">
+        <div class="field">
+          <input type="file" id="fileInput" accept=".xlsx,.xlsm,.csv,.pdf" />
+          <div class="hint">Supported: .xlsx, .xlsm, .csv, .pdf (max 50 MB)</div>
+        </div>
+        <div class="field" style="flex: 0 0 auto; align-self: flex-start;">
+          <button class="btn btn-primary" id="detectBtn" onclick="detectColumns()">Detect columns</button>
+        </div>
+      </div>
+      <div class="error" id="errorBox"></div>
+      <div class="loading" id="loading"><span class="spinner"></span>Working...</div>
+    </div>
+
+    <div class="card" id="configCard" style="display:none;">
+      <div class="step"><span class="step-num">2</span><h2>Configure stamp column</h2></div>
+      <div class="field" style="width:100%; display:none;" id="previewWrap">
+        <label>Uploaded PDF preview</label>
+        <div class="table-wrap" id="pdfPreview" style="max-height: 500px; text-align: center;"></div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="columnSelect">Columns to apply borders on</label>
+          <div id="columnSelect" class="checkbox-list"></div>
+          <div class="hint">Tick one or more columns — borders will be applied to every selected column.</div>
+        </div>
+      </div>
+      <div style="margin-top: 18px;">
+        <button class="btn btn-success" id="processBtn" onclick="processFile()">Apply borders</button>
+      </div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none;">
+      <div class="step"><span class="step-num">3</span><h2>Result</h2></div>
+      <div class="legend">
+        <span><span class="swatch green"></span> Stamp present — green border</span>
+        <span><span class="swatch red"></span> Stamp absent — red border</span>
+      </div>
+      <div class="stats" id="statsBox"></div>
+      <div class="table-wrap">
+        <table>
+          <thead id="resultHead"></thead>
+          <tbody id="resultBody"></tbody>
+        </table>
+      </div>
+      <div class="hint" id="previewNote"></div>
+      <a class="btn btn-download" id="downloadLink" href="#" style="display:none;">⬇ Download stamped document</a>
+    </div>
+
+    <footer>Powered by Flask + openpyxl</footer>
+  </div>
+
+  <script>
+    let currentFile = null;
+    let currentColumns = [];
+
+    function showError(msg) {
+      const box = document.getElementById('errorBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+    function clearError() {
+      document.getElementById('errorBox').style.display = 'none';
+    }
+    function updateSelectedColumns() {
+      const container = document.getElementById('columnSelect');
+      currentColumns = Array.from(container.querySelectorAll('input[type=checkbox]:checked'))
+        .map((cb) => cb.value);
+    }
+    function showLoading(on) {
+      document.getElementById('loading').style.display = on ? 'block' : 'none';
+      document.getElementById('detectBtn').disabled = on;
+      document.getElementById('processBtn').disabled = on;
+    }
+
+    async function detectColumns() {
+      clearError();
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) { showError('Please choose a file first.'); return; }
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      showLoading(true);
+      try {
+        const res = await fetch('/api/columns', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to detect columns.');
+
+        currentFile = data.file;
+        const list = document.getElementById('columnSelect');
+        list.innerHTML = '';
+        data.columns.forEach((c) => {
+          const label = document.createElement('label');
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = c;
+          label.appendChild(cb);
+          label.appendChild(document.createTextNode(c));
+          list.appendChild(label);
+        });
+        const previewWrap = document.getElementById('previewWrap');
+        const pdfPreview = document.getElementById('pdfPreview');
+        if (data.preview && data.preview.length) {
+          pdfPreview.innerHTML = '';
+          data.preview.forEach((src) => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = 'PDF page';
+            img.style.width = '100%';
+            img.style.maxWidth = '480px';
+            img.style.margin = '8px 0';
+            img.style.border = '1px solid #cfd8dc';
+            img.style.borderRadius = '6px';
+            pdfPreview.appendChild(img);
+          });
+          previewWrap.style.display = 'block';
+        } else {
+          previewWrap.style.display = 'none';
+        }
+        document.getElementById('configCard').style.display = 'block';
+        document.getElementById('resultCard').style.display = 'none';
+        list.addEventListener('change', updateSelectedColumns);
+        updateSelectedColumns();
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    async function processFile() {
+      clearError();
+      if (!currentFile) { showError('Please upload a file first.'); return; }
+
+      const payload = {
+        file: currentFile,
+        columns: currentColumns
+      };
+
+      showLoading(true);
+      try {
+        const res = await fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Processing failed.');
+
+        renderResult(data);
+        document.getElementById('resultCard').style.display = 'block';
+        document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function renderResult(data) {
+      const s = data.stats;
+      document.getElementById('statsBox').innerHTML = `
+        <div class="stat green"><div class="num">${s.present}</div><div class="lbl">Stamp present</div></div>
+        <div class="stat red"><div class="num">${s.absent}</div><div class="lbl">Stamp absent</div></div>
+        <div class="stat gray"><div class="num">${s.empty}</div><div class="lbl">Empty cells</div></div>
+      `;
+
+      const headers = (data.headers && data.headers.length) ? data.headers : ['Value'];
+      const stampIndexes = (data.stamp_indexes && data.stamp_indexes.length) ? data.stamp_indexes : [0];
+
+      const thead = document.getElementById('resultHead');
+      thead.innerHTML = '';
+      const headerRow = document.createElement('tr');
+      headers.forEach((h) => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headerRow.appendChild(th);
+      });
+      const thStatus = document.createElement('th');
+      thStatus.textContent = 'Status';
+      headerRow.appendChild(thStatus);
+      thead.appendChild(headerRow);
+
+      const body = document.getElementById('resultBody');
+      body.innerHTML = '';
+      data.results.forEach((r) => {
+        const tr = document.createElement('tr');
+        const cellsArr = (r.cells && r.cells.length) ? r.cells : [r.value];
+        const images = r.images || {};
+        const colPresent = r.col_present || {};
+        cellsArr.forEach((v, i) => {
+          const td = document.createElement('td');
+          const isStampCol = stampIndexes.indexOf(i) !== -1;
+          const imgUrl = isStampCol ? images[String(i)] : null;
+          const cellPresent = isStampCol ? colPresent[String(i)] : false;
+          if (imgUrl) {
+            td.className = cellPresent ? 'present-cell' : 'absent-cell';
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.alt = 'stamp';
+            img.style.maxHeight = '70px';
+            img.style.maxWidth = '120px';
+            img.style.display = 'block';
+            td.appendChild(img);
+          } else {
+            td.textContent = v;
+            if (isStampCol) td.className = cellPresent ? 'present-cell' : 'absent-cell';
+          }
+          tr.appendChild(td);
+        });
+        const tdStatus = document.createElement('td');
+        const badge = r.present ? '<span class="badge yes">Present</span>' : '<span class="badge no">Absent</span>';
+        tdStatus.innerHTML = badge;
+        tr.appendChild(tdStatus);
+        body.appendChild(tr);
+      });
+
+      document.getElementById('previewNote').textContent =
+        data.total > data.results.length
+          ? `Showing first ${data.results.length} of ${data.total} rows. The full file has been processed.`
+          : `All ${data.total} rows shown.`;
+
+      const link = document.getElementById('downloadLink');
+      link.href = data.download;
+      link.style.display = 'inline-block';
+    }
+
+    function escapeHtml(v) {
+      return String(v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
